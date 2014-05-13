@@ -45,7 +45,10 @@ bool AsyncState::WaitForState(eAsyncState state, int timeoutMs /* = -1*/)
   }
   
   if (GetState() < state)
+  {
+    CLockObject lock(m_mutex);
     m_condition.Wait(m_mutex, timeoutMs);
+  }
   
   return GetState() >= state;
 }
