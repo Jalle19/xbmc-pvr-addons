@@ -46,7 +46,6 @@ void CHTSPResponse::Set(htsmsg_t *msg)
 
 htsmsg_t *CHTSPResponse::Get(PLATFORM::CMutex &mutex, uint32_t timeout)
 {
-  CLockObject lock(mutex);
   m_cond.Wait(mutex, m_flag, timeout);
   
   htsmsg_t *r = m_msg;

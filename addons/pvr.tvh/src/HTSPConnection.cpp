@@ -225,6 +225,7 @@ bool CHTSPConnection::ReadMessage ( void )
 
     if (response)
     {
+      CLockObject lock(m_mutex);
       response->Set(msg);
       return true;
     }
@@ -316,6 +317,8 @@ htsmsg_t *CHTSPConnection::SendAndWait0 ( const char *method, htsmsg_t *msg, int
   htsmsg_add_u32(msg, "seq", seq);
 
   /* Send Message (bypass TX check) */
+  CLockObject lock(m_mutex);
+  
   if (!SendMessage0(method, msg))
   {
     m_messages.Erase(seq);
