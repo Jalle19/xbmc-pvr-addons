@@ -441,8 +441,6 @@ void CHTSPConnection::Register ( void )
     pass = g_strPassword;
   }
   {
-    CLockObject lock(m_mutex);
-
     /* Send Greeting */
     tvhdebug("sending hello");
     if (!SendHello()) {
@@ -470,6 +468,7 @@ void CHTSPConnection::Register ( void )
       goto fail;
 
     tvhdebug("registered");
+    CLockObject lock(m_mutex);
     m_ready = true;
     m_regCond.Broadcast();
     return;
