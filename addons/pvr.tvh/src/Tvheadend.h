@@ -433,7 +433,6 @@ public:
    */
   bool WaitForConnection ( void )
   {
-    PLATFORM::CLockObject lock(m_conn.Mutex());
     return m_conn.WaitForConnection();
   }
   inline const char *GetServerName    ( void )

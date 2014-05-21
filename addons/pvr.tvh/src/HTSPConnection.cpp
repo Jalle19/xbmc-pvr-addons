@@ -103,6 +103,8 @@ CStdString CHTSPConnection::GetWebURL ( const char *fmt, ... )
 
 bool CHTSPConnection::WaitForConnection ( void )
 {
+  CLockObject lock(m_mutex);
+  
   if (!m_ready) {
     tvhtrace("waiting for registration...");
     m_regCond.Wait(m_mutex, m_ready, g_iConnectTimeout * 1000);
