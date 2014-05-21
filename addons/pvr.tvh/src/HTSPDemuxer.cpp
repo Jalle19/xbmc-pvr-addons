@@ -687,3 +687,9 @@ void CHTSPDemuxer::ParseTimeshiftStatus ( htsmsg_t *m )
   tvhtrace("  start : %ld", (long)m_timeshiftStatus.start);
   tvhtrace("  end   : %ld", (long)m_timeshiftStatus.end);
 }
+
+time_t CHTSPDemuxer::GetTimeshiftTime()
+{
+  CLockObject lock(m_mutex);
+  return (time_t)m_timeshiftStatus.shift;
+}

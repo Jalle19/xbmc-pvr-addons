@@ -220,12 +220,8 @@ public:
 
   bool   ProcessMessage ( const char *method, htsmsg_t *m );
   void   Connected      ( void );
+  time_t GetTimeshiftTime();
   
-  inline time_t GetTimeshiftTime() const
-  {
-    return (time_t)m_timeshiftStatus.shift;
-  }
-
 private:
   PLATFORM::CMutex                        m_mutex;
   CHTSPConnection                        &m_conn;
@@ -502,7 +498,7 @@ public:
   {
     return m_dmx.CurrentSignal(sig);
   }
-  inline time_t       DemuxGetTimeshiftTime() const
+  inline time_t       DemuxGetTimeshiftTime()
   {
     return m_dmx.GetTimeshiftTime();
   }
