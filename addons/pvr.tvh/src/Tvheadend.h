@@ -192,6 +192,7 @@ private:
   void        SendAuth         ( const CStdString &u, const CStdString &p );
 
   PLATFORM::CTcpSocket               *m_socket;
+  PLATFORM::CMutex                    m_socketMutex;
   PLATFORM::CMutex                    m_mutex;
   CHTSPRegister                       m_regThread;
   PLATFORM::CCondition<volatile bool> m_regCond;

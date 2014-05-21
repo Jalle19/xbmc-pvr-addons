@@ -150,9 +150,14 @@ void CHTSPConnection::Disconnect ( void )
   CLockObject lock(m_mutex);
 
   /* Close socket */
-  if (m_socket) {
-    m_socket->Shutdown();
-    m_socket->Close();
+  {
+    CLockObject lock(m_socketMutex);
+    
+    if (m_socket)
+    {
+      m_socket->Shutdown();
+      m_socket->Close();
+    }
   }
 
   /* Signal all waiters and erase messages */
@@ -175,27 +180,31 @@ bool CHTSPConnection::ReadMessage ( void )
   const char *method;
 
   /* Read 4 byte len */
-  len = m_socket->Read(&lb, sizeof(lb));
-  if (len != sizeof(lb))
-    return false;
-  len = (lb[0] << 24) + (lb[1] << 16) + (lb[2] << 8) + lb[3];
-
-  /* Read rest of packet */ 
-  buf = (uint8_t*)malloc(len);
-  cnt = 0;
-  while (cnt < len)
   {
-    r = m_socket->Read((char*)buf + cnt, len - cnt, g_iResponseTimeout * 1000);
-    if (r < 0)
-    {
-      tvherror("failed to read packet (%s)",
-               m_socket->GetError().c_str());
-      free(buf);
+    CLockObject lock(m_socketMutex);
+    
+    len = m_socket->Read(&lb, sizeof(lb));
+    if (len != sizeof(lb))
       return false;
-    } 
-    cnt += r;
-    if (cnt < len)
-      printf("partial read\n");
+    len = (lb[0] << 24) + (lb[1] << 16) + (lb[2] << 8) + lb[3];
+
+    /* Read rest of packet */ 
+    buf = (uint8_t*)malloc(len);
+    cnt = 0;
+    while (cnt < len)
+    {
+      r = m_socket->Read((char*)buf + cnt, len - cnt, g_iResponseTimeout * 1000);
+      if (r < 0)
+      {
+        tvherror("failed to read packet (%s)",
+                 m_socket->GetError().c_str());
+        free(buf);
+        return false;
+      } 
+      cnt += r;
+      if (cnt < len)
+        printf("partial read\n");
+    }
   }
 
   /* Deserialize */
@@ -249,6 +258,7 @@ bool CHTSPConnection::SendMessage0 ( const char *method, htsmsg_t *msg )
   size_t  len;
   ssize_t c = -1;
   uint32_t seq;
+  CStdString error;
 
   if (!htsmsg_get_u32(msg, "seq", &seq))
     tvhtrace("sending message [%s : %d]", method, seq);
@@ -263,12 +273,17 @@ bool CHTSPConnection::SendMessage0 ( const char *method, htsmsg_t *msg )
     return false;
 
   /* Send data */
-  c = m_socket->Write(buf, len);
+  {
+    CLockObject lock(m_socketMutex);
+    c = m_socket->Write(buf, len);
+    error = m_socket->GetError();
+  }
+  
   free(buf);
   if (c != (ssize_t)len)
   {
     tvherror("failed to write (%s)",
-              m_socket->GetError().c_str());
+              error.c_str());
     Disconnect();
     return false;
   }
@@ -490,18 +505,17 @@ void* CHTSPConnection::Process ( void )
       timeout = g_iConnectTimeout * 1000;
     }
 
-    /* Create socket (ensure mutex protection) */
+    /* Reset some flags */
     {
       CLockObject lock(m_mutex);
-      if (m_socket)
-        delete m_socket;
+      
       tvh->Disconnected();
       if (!log)
         tvhdebug("connecting to %s:%d", host.c_str(), port);
       else
         tvhtrace("connecting to %s:%d", host.c_str(), port);
       log = true;
-      m_socket = new CTcpSocket(host.c_str(), port);
+      
       m_ready  = false;
       m_messages.Clear();
       if (m_challenge) {
@@ -509,10 +523,25 @@ void* CHTSPConnection::Process ( void )
         m_challenge = NULL;
       }
     }
+    
+    bool socketOpened = false;
+    
+    /* Create socket */
+    {
+      CLockObject lock(m_socketMutex);
 
-    /* Connect */
-    tvhtrace("waiting for connection...");
-    if (!m_socket->Open(timeout))
+      if (m_socket)
+        delete m_socket;
+
+      m_socket = new CTcpSocket(host.c_str(), port);
+      
+      /* Connect */
+      tvhtrace("waiting for connection...");
+      socketOpened = m_socket->Open(timeout);
+    }
+
+    /* Retry if we failed to open the socket */
+    if (!socketOpened)
     {
       /* Unable to connect, inform the user */
       tvherror("unable to connect to %s:%d", host.c_str(), port);
