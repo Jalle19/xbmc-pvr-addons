@@ -110,7 +110,6 @@ bool CHTSPDemuxer::Open ( const PVR_CHANNEL &chn )
 
 void CHTSPDemuxer::Close ( void )
 {
-  CLockObject lock(m_conn.Mutex());
   Close0();
   tvhdebug("demux close");
 }
@@ -139,16 +138,15 @@ void CHTSPDemuxer::Flush ( void )
 void CHTSPDemuxer::Abort ( void )
 {
   tvhtrace("demux abort");
-  CLockObject lock(m_conn.Mutex());
   Abort0();
 }
 
 bool CHTSPDemuxer::Seek 
   ( int time, bool _unused(backwards), double *startpts )
 {
+  CLockObject lock(m_mutex);
   htsmsg_t *m;
 
-  CLockObject lock(m_conn.Mutex());
   if (!m_subscription.active)
     return false;
 
@@ -189,7 +187,7 @@ bool CHTSPDemuxer::Seek
 
 void CHTSPDemuxer::Speed ( int speed )
 {
-  CLockObject lock(m_conn.Mutex());
+  CLockObject lock(m_mutex);
   if (!m_subscription.active)
     return;
   m_subscription.speed = speed;
