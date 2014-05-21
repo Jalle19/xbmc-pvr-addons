@@ -62,7 +62,6 @@ void CTvheadend::Start ( void )
 PVR_ERROR CTvheadend::GetDriveSpace ( long long *total, long long *used )
 {
   int64_t s64;
-  CLockObject lock(m_conn.Mutex());
 
   htsmsg_t *m = htsmsg_create_map();
   m = m_conn.SendAndWait("getDiskSpace", m);
@@ -221,8 +220,6 @@ PVR_ERROR CTvheadend::SendDvrDelete ( uint32_t id, const char *method )
 {
   const char *str;
   uint32_t u32;
-
-  CLockObject lock(m_conn.Mutex());
 
   /* Build message */
   htsmsg_t *m = htsmsg_create_map();
@@ -522,8 +519,6 @@ PVR_ERROR CTvheadend::AddTimer ( const PVR_TIMER &timer )
   uint32_t u32;
   dvr_prio_t prio;
 
-  CLockObject lock(m_conn.Mutex());
-
   /* Build message */
   htsmsg_t *m = htsmsg_create_map();
   if (timer.iEpgUid > 0)
@@ -651,8 +646,6 @@ PVR_ERROR CTvheadend::GetEpg
   }
   else
   {
-    CLockObject lock(m_conn.Mutex());
-
     /* Build message */
     htsmsg_t *msg = htsmsg_create_map();
     htsmsg_add_u32(msg, "channelId", chn.iUniqueId);
