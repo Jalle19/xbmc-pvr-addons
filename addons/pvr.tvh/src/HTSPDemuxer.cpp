@@ -87,11 +87,12 @@ void CHTSPDemuxer::Abort0 ( void )
 
 bool CHTSPDemuxer::Open ( const PVR_CHANNEL &chn )
 {
-  CLockObject lock(m_conn.Mutex());
   tvhdebug("demux open");
 
   /* Close current stream */
   Close0();
+  
+  CLockObject lock(m_mutex);
   
   /* Create new subscription */
   m_subscription = SSubscription();
