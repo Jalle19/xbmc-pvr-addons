@@ -66,13 +66,18 @@ void CHTSPDemuxer::Connected ( void )
  * *************************************************************************/
 
 void CHTSPDemuxer::Close0 ( void )
-{
-  /* Send unsubscribe */
-  if (m_subscription.active)
-    SendUnsubscribe();
+{  
+  {
+    CLockObject lock(m_mutex);
+    
+    /* Send unsubscribe */
+    if (m_subscription.active)
+      SendUnsubscribe();
 
-  /* Clear */
-  m_started = false;
+    /* Clear */
+    m_started = false;
+  }
+  
   Flush();
   Abort0();
 }
