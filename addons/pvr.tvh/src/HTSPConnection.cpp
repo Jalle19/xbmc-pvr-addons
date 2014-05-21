@@ -181,8 +181,6 @@ bool CHTSPConnection::ReadMessage ( void )
 
   /* Read 4 byte len */
   {
-    CLockObject lock(m_socketMutex);
-    
     len = m_socket->Read(&lb, sizeof(lb));
     if (len != sizeof(lb))
       return false;
@@ -271,12 +269,9 @@ bool CHTSPConnection::SendMessage0 ( const char *method, htsmsg_t *msg )
     return false;
 
   /* Send data */
-  {
-    CLockObject lock(m_socketMutex);
-    c = m_socket->Write(buf, len);
-    error = m_socket->GetError();
-  }
-  
+  c = m_socket->Write(buf, len);
+  error = m_socket->GetError();
+    
   free(buf);
   if (c != (ssize_t)len)
   {
