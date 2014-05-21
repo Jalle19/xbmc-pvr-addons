@@ -99,7 +99,6 @@ bool CHTSPDemuxer::Open ( const PVR_CHANNEL &chn )
   m_subscription.channelId = chn.iUniqueId;
 
   /* Open */
-  m_started = false;
   SendSubscribe();
   
   /* Send unsubscribe if subscribing failed */
