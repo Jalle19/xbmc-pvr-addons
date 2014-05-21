@@ -219,9 +219,6 @@ bool CHTSPConnection::ReadMessage ( void )
   if (htsmsg_get_u32(msg, "seq", &seq) == 0)
   {
     tvhtrace("received response [%d]", seq);
-    CLockObject lock(m_mutex);
-    
-    /* Update the response */
     CHTSPResponse *response = m_messages.Find(seq);
 
     if (response)
