@@ -176,7 +176,7 @@ bool CHTSPDemuxer::Seek
   htsmsg_destroy(m);
 
   /* Wait for time */
-  if (!m_seekCond.Wait(m_conn.Mutex(), m_seekTime, g_iResponseTimeout * 1000))
+  if (!m_seekCond.Wait(m_mutex, m_seekTime, g_iResponseTimeout * 1000))
   {
     tvherror("failed to get subscriptionSeek response");
     return false;
@@ -582,7 +582,6 @@ void CHTSPDemuxer::ParseSubscriptionStop ( htsmsg_t *_unused(m) )
 
 void CHTSPDemuxer::ParseSubscriptionSkip ( htsmsg_t *m )
 {
-  CLockObject lock(m_conn.Mutex());
   int64_t s64;
   if (htsmsg_get_s64(m, "time", &s64)) {
     m_seekTime = INVALID_SEEKTIME;
