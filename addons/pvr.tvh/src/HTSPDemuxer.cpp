@@ -52,6 +52,8 @@ CHTSPDemuxer::~CHTSPDemuxer ( void )
 
 void CHTSPDemuxer::Connected ( void )
 {
+  CLockObject lock(m_mutex);
+  
   /* Re-subscribe */
   if (m_subscription.active)
   {
