@@ -149,8 +149,6 @@ bool CHTSPConnection::HasCapability(const std::string &capability) const
  */
 void CHTSPConnection::Disconnect ( void )
 {
-  CLockObject lock(m_mutex);
-
   /* Close socket */
   {
     CLockObject lock(m_socketMutex);
