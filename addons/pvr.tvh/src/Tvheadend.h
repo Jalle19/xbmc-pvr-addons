@@ -282,11 +282,12 @@ public:
   void Connected    ( void );
 
 private:
-  CHTSPConnection &m_conn;
-  CStdString      m_path;
-  uint32_t        m_fileId;
-  CCircBuffer     m_buffer;
-  int64_t         m_offset;
+  CHTSPConnection  &m_conn;
+  PLATFORM::CMutex m_mutex;
+  CStdString       m_path;
+  uint32_t         m_fileId;
+  CCircBuffer      m_buffer;
+  int64_t          m_offset;
 
   void      Flush  ( void );
 

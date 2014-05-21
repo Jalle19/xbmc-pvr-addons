@@ -49,6 +49,8 @@ CHTSPVFS::~CHTSPVFS ( void )
 void CHTSPVFS::Connected ( void )
 {
   /* Re-open */
+  CLockObject lock(m_mutex);
+  
   if (m_fileId != 0)
   { 
     tvhdebug("vfs re-open file");
@@ -78,10 +80,10 @@ void CHTSPVFS::Flush ( void )
 
 bool CHTSPVFS::Open ( const PVR_RECORDING &rec )
 {
-  CLockObject lock(m_conn.Mutex());
-
   /* Close existing */
   Close();
+  
+  CLockObject lock(m_mutex);
 
   /* Cache details */
   m_path.Format("dvr/%s", rec.strRecordingId);
@@ -99,7 +101,7 @@ bool CHTSPVFS::Open ( const PVR_RECORDING &rec )
 
 void CHTSPVFS::Close ( void )
 {
-  CLockObject lock(m_conn.Mutex());
+  CLockObject lock(m_mutex);
 
   if (m_fileId != 0)
     SendFileClose();
@@ -112,7 +114,7 @@ void CHTSPVFS::Close ( void )
 int CHTSPVFS::Read ( unsigned char *buf, unsigned int len )
 {
   ssize_t ret;
-  CLockObject lock(m_conn.Mutex());
+  CLockObject lock(m_mutex);
 
   /* Not opened */
   if (!m_fileId)
@@ -167,7 +169,7 @@ int CHTSPVFS::Read ( unsigned char *buf, unsigned int len )
 
 long long CHTSPVFS::Seek ( long long pos, int whence )
 {
-  CLockObject lock(m_conn.Mutex());
+  CLockObject lock(m_mutex);
   if (m_fileId == 0)
     return -1;
   return SendFileSeek(pos, whence);
@@ -175,7 +177,7 @@ long long CHTSPVFS::Seek ( long long pos, int whence )
 
 long long CHTSPVFS::Tell ( void )
 {
-  CLockObject lock(m_conn.Mutex());
+  CLockObject lock(m_mutex);
   if (m_fileId == 0)
     return -1;
   return m_offset;
@@ -184,7 +186,7 @@ long long CHTSPVFS::Tell ( void )
 long long CHTSPVFS::Size ( void )
 {
   int64_t ret = -1;
-  CLockObject lock(m_conn.Mutex());
+  CLockObject lock(m_mutex);
   htsmsg_t *m;
   
   /* Build */
