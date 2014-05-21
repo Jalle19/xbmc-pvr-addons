@@ -181,8 +181,6 @@ public:
 
   inline bool IsConnected       ( void ) const { return m_ready; }
   bool        WaitForConnection ( void );
-
-  inline PLATFORM::CMutex& Mutex ( void ) { return m_mutex; }
   
 private:
   void*       Process          ( void );
