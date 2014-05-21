@@ -52,8 +52,6 @@ CHTSPDemuxer::~CHTSPDemuxer ( void )
 
 void CHTSPDemuxer::Connected ( void )
 {
-  CLockObject lock(m_mutex);
-  
   /* Re-subscribe */
   if (m_subscription.active)
   {
@@ -68,17 +66,13 @@ void CHTSPDemuxer::Connected ( void )
  * *************************************************************************/
 
 void CHTSPDemuxer::Close0 ( void )
-{  
-  {
-    CLockObject lock(m_mutex);
-    
-    /* Send unsubscribe */
-    if (m_subscription.active)
-      SendUnsubscribe();
+{
+  /* Send unsubscribe */
+  if (m_subscription.active)
+    SendUnsubscribe();
 
-    /* Clear */
-    m_started = false;
-  }
+  /* Clear */
+  m_started = false;
   
   Flush();
   Abort0();
@@ -98,8 +92,6 @@ bool CHTSPDemuxer::Open ( const PVR_CHANNEL &chn )
 
   /* Close current stream */
   Close0();
-  
-  CLockObject lock(m_mutex);
   
   /* Create new subscription */
   m_subscription = SSubscription();
