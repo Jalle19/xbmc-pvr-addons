@@ -37,36 +37,6 @@ using namespace ADDON;
 using namespace PLATFORM;
 
 /*
- * HTSP Response objct
- */
-CHTSPResponse::CHTSPResponse ()
-  : m_flag(false), m_msg(NULL)
-{
-}
-
-CHTSPResponse::~CHTSPResponse ()
-{
-  if (m_msg) htsmsg_destroy(m_msg);
-  Set(NULL); // ensure signal is sent
-}
-
-void CHTSPResponse::Set ( htsmsg_t *msg )
-{
-  m_msg  = msg;
-  m_flag = true;
-  m_cond.Broadcast();
-}
-
-htsmsg_t *CHTSPResponse::Get ( CMutex &mutex, uint32_t timeout )
-{
-  m_cond.Wait(mutex, m_flag, timeout);
-  htsmsg_t *r = m_msg;
-  m_msg       = NULL;
-  m_flag      = false;
-  return r;
-}
-
-/*
  * Registration thread
  */
 CHTSPRegister::CHTSPRegister ( CHTSPConnection *conn )
@@ -90,7 +60,7 @@ void *CHTSPRegister::Process ( void )
  */
 
 CHTSPConnection::CHTSPConnection ()
-  : m_socket(NULL), m_regThread(this), m_ready(false), m_seq(0),
+  : m_socket(NULL), m_regThread(this), m_ready(false),
     m_serverName(""), m_serverVersion(""), m_htspVersion(0),
     m_webRoot(""), m_challenge(NULL), m_challengeLen(0)
 {
@@ -186,7 +156,7 @@ void CHTSPConnection::Disconnect ( void )
   }
 
   /* Signal all waiters and erase messages */
-  m_messages.clear();
+  m_messages.Clear();
 }
 
 /*
@@ -241,10 +211,13 @@ bool CHTSPConnection::ReadMessage ( void )
   {
     tvhtrace("received response [%d]", seq);
     CLockObject lock(m_mutex);
-    CHTSPResponseList::iterator it;
-    if ((it = m_messages.find(seq)) != m_messages.end())
+    
+    /* Update the response */
+    CHTSPResponse *response = m_messages.Find(seq);
+
+    if (response)
     {
-      it->second->Set(msg);
+      response->Set(msg);
       return true;
     }
   }
@@ -325,21 +298,20 @@ htsmsg_t *CHTSPConnection::SendAndWait0 ( const char *method, htsmsg_t *msg, int
 
   /* Add Sequence number */
   CHTSPResponse resp;
-  seq = ++m_seq;
+  seq = m_messages.Add(&resp);
   htsmsg_add_u32(msg, "seq", seq);
-  m_messages[seq] = &resp;
 
   /* Send Message (bypass TX check) */
   if (!SendMessage0(method, msg))
   {
-    m_messages.erase(seq);
+    m_messages.Erase(seq);
     tvherror("failed to transmit");
     return NULL;
   }
 
   /* Wait for response */
   msg = resp.Get(m_mutex, iResponseTimeout * 1000);
-  m_messages.erase(seq);
+  m_messages.Erase(seq);
   if (!msg)
   {
     tvherror("response not received");
@@ -531,7 +503,7 @@ void* CHTSPConnection::Process ( void )
       log = true;
       m_socket = new CTcpSocket(host.c_str(), port);
       m_ready  = false;
-      m_seq    = 0;
+      m_messages.Clear();
       if (m_challenge) {
         free(m_challenge);
         m_challenge = NULL;

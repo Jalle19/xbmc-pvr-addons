@@ -31,6 +31,7 @@
 #include "libXBMC_addon.h"
 #include "CircBuffer.h"
 #include "HTSPTypes.h"
+#include "HTSPResponse.h"
 #include "AsyncState.h"
 #include <map>
 #include <queue>
@@ -85,34 +86,16 @@ class CTvheadend;
 class CHTSPConnection;
 class CHTSPDemuxer;
 class CHTSPVFS;
-class CHTSPResponse;
 class CHTSPMessage;
 
 /* Typedefs */
 typedef std::runtime_error AuthException;
-typedef std::map<uint32_t,CHTSPResponse*> CHTSPResponseList;
 typedef PLATFORM::SyncedBuffer<CHTSPMessage> CHTSPMessageQueue;
 
 /*
  * Global (TODO: might want to change this)
  */
 extern CTvheadend *tvh;
-
-/*
- * HTSP Response handler
- */
-class CHTSPResponse
-{
-public:
-  CHTSPResponse(void);
-  ~CHTSPResponse();
-  htsmsg_t *Get ( PLATFORM::CMutex &mutex, uint32_t timeout );
-  void      Set ( htsmsg_t *m );
-private:
-  PLATFORM::CCondition<volatile bool> m_cond;
-  bool                                m_flag;
-  htsmsg_t                           *m_msg;
-};
 
 /*
  * HTSP Message
@@ -213,7 +196,6 @@ private:
   CHTSPRegister                       m_regThread;
   PLATFORM::CCondition<volatile bool> m_regCond;
   bool                                m_ready;
-  uint32_t                            m_seq;
   CStdString                          m_serverName;
   CStdString                          m_serverVersion;
   int                                 m_htspVersion;
